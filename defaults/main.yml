@@ -1,0 +1,21 @@
+---
+firewalld_enabled: yes  # yes to enable, no to disable
+
+# Custom firewall services
+# firewalld_create_services:
+#  - name: ssh-custom
+#    description: 'Custom SSH port'
+#    ports:
+#      - { protocol: tcp, port: 21098 }
+firewalld_create_services: []
+
+# firewalld_enable_services:
+#   - https
+#   - ssh
+#   - my-custom-service
+firewalld_enable_services: []
+
+# firewalld_disable_services:
+#   - mysql
+#   - my-old-custom-service
+firewalld_disable_services: []

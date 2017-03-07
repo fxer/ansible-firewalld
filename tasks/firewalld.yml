@@ -1,0 +1,63 @@
+---
+- name: Install firewalld
+  package:
+    name: "{{ item }}"
+    state: latest
+  when: firewalld_enabled
+  with_items:
+    - firewalld
+
+- name: Enable firewalld
+  service:
+    name: firewalld
+    state: started
+    enabled: yes
+  when: firewalld_enabled
+
+- name: Disable firewalld
+  service:
+    name: firewalld
+    state: stopped
+    enabled: no
+  when: not firewalld_enabled
+
+- name: Create custom firewalld services
+  template:
+    src: firewalld.xml.j2
+    dest: "/etc/firewalld/services/{{ item.name }}.xml"
+    owner: 'root'
+    group: 'root'
+    mode: 0644
+  register: firewalld_updated
+  when: firewalld_enabled
+  with_items: "{{ firewalld_create_services }}"
+  loop_control:
+    label: "{{ item.name }}"
+    
+- name: Reload firewalld services
+  command: firewall-cmd --reload
+  when: firewalld_updated.changed
+
+# Apply rules permanently but not immediately, so the playbook doesn't abort if ssh port changes
+# Use notify to reload the firewalld at the end of the playbook
+- name: Enable firewalld services
+  firewalld:
+    service: "{{ item }}"
+    permanent: yes
+    immediate: no
+    state: enabled
+  when: firewalld_enabled
+  with_items: "{{ firewalld_enable_services }}"
+  notify:
+    - reload firewalld
+
+- name: Disable firewalld services
+  firewalld:
+    service: "{{ item }}"
+    permanent: yes
+    immediate: no
+    state: disabled
+  when: firewalld_enabled
+  with_items: "{{ firewalld_disable_services }}"
+  notify:
+    - reload firewalld
